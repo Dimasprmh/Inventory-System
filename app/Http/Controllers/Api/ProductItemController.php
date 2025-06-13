@@ -22,6 +22,13 @@ class ProductItemController extends Controller
         return new ItemResource(true, 'List Items of Product: ' . $product->name, $product);
     }
 
+    public function getAllItems()
+    {
+        $items = \App\Models\Item::with('product')->get();
+
+        return response()->json($items);
+    }
+
     // POST /api/products/{product}/items
     public function store(Request $request, Product $product)
     {
