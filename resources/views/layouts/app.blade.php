@@ -11,9 +11,11 @@
 <body id="page-top">
 <div id="wrapper">
     @include('layouts.sidebar')
-    <div id="content-wrapper" class="d-flex flex-colum  n">
+
+    <div id="content-wrapper" class="d-flex flex-column">
         <div id="content">
             @include('layouts.navbar')
+
             <div class="container-fluid">
                 <div id="flashMessageContainer" class="mb-4"></div>
                 @yield('content')
@@ -22,6 +24,7 @@
     </div>
 </div>
 
+<!-- JS Dependencies -->
 <script src="{{ asset('assets/vendor/jquery/jquery.min.js') }}"></script>
 <script src="{{ asset('assets/vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
 <script src="{{ asset('assets/vendor/jquery-easing/jquery.easing.min.js') }}"></script>
@@ -50,12 +53,15 @@
 
             const user = await response.json();
 
+            sessionStorage.setItem('user', JSON.stringify(user));
+            renderSidebar(user.menus);
+
             document.querySelectorAll('.sidebar-username').forEach(el => el.innerText = user.name);
             document.querySelectorAll('.navbar-username').forEach(el => el.innerText = user.name);
+
         } catch (error) {
             console.warn('Token expired atau tidak valid, mengarahkan ke login...');
-            sessionStorage.removeItem('token');
-            sessionStorage.removeItem('user');
+            sessionStorage.clear();
             window.location.href = '/login';
         }
 
@@ -74,17 +80,75 @@
                 </div>
             `;
 
-            container.innerHTML = ''; // bersihkan pesan sebelumnya
+            container.innerHTML = '';
             container.appendChild(alert);
 
-            // Hapus otomatis setelah 5 detik
             setTimeout(() => {
                 $(alert).alert('close');
             }, 5000);
         }
 
+        function renderSidebar(menus) {
+            const sidebar = document.getElementById('accordionSidebar');
+
+            let html = `
+                <a class="sidebar-brand d-flex align-items-center justify-content-center" href="#">
+                    <div class="sidebar-brand-text mx-3">Stok Gudang</div>
+                </a>
+                <hr class="sidebar-divider my-0">
+            `;
+
+            menus.forEach(menu => {
+                if (menu.children) {
+                    const id = 'menu-' + menu.title.toLowerCase().replace(/\s+/g, '-');
+                    html += `
+                        <li class="nav-item">
+                            <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#${id}"
+                                aria-expanded="false" aria-controls="${id}">
+                                <i class="${menu.icon}"></i>
+                                <span>${menu.title}</span>
+                            </a>
+                            <div id="${id}" class="collapse" data-parent="#accordionSidebar">
+                                <div class="bg-white py-2 collapse-inner rounded">
+                                    ${menu.children.map(child => `<a class="collapse-item" href="${child.url}">${child.title}</a>`).join('')}
+                                </div>
+                            </div>
+                        </li>
+                        <hr class="sidebar-divider">
+                    `;
+                } else {
+                    html += `
+                        <li class="nav-item">
+                            <a class="nav-link" href="${menu.url}">
+                                <i class="${menu.icon}"></i>
+                                <span>${menu.title}</span>
+                            </a>
+                        </li>
+                        <hr class="sidebar-divider">
+                    `;
+                }
+            });
+
+            html += `
+                <div class="text-center d-none d-md-inline">
+                    <button class="rounded-circle border-0" id="sidebarToggle"></button>
+                </div>
+            `;
+
+            sidebar.innerHTML = html;
+
+            // Bind ulang tombol toggle agar sidebar bisa menyempit
+            const toggleBtn = document.getElementById('sidebarToggle');
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', function () {
+                    document.body.classList.toggle('sidebar-toggled');
+                    document.querySelector('.sidebar').classList.toggle('toggled');
+                });
+            }
+        }
     });
 </script>
+
 @stack("scripts")
 </body>
 </html>

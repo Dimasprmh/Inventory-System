@@ -2,9 +2,6 @@
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Session;
-use Illuminate\Http\Request;
-use App\Http\Controllers\Api\AuthController;
-use App\Http\Controllers\Web\BarangMasukWebController; // ← penting
 
 // --- AUTHENTICATION ---
 Route::get('/login', function () {
@@ -37,3 +34,12 @@ Route::get('/barang_masuk', function () {
 Route::get('/barang_keluar', function () {
     return view('kelola_barang.barang_keluar');
 })->name('barang_keluar');
+
+// --- USER MANAGEMENT (KHUSUS ADMIN) ---
+Route::get('/usermanagement', function () {
+    return view('usermanagement.usermanagement'); 
+})->name('usermanagement');
+
+Route::get('/403', function () {
+    return response()->view('errors.403', [], 403);
+})->name('403');
