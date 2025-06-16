@@ -9,22 +9,32 @@ use App\Models\HistoriBarang;
 
 class BarangKeluarController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $data = HistoriBarang::with('item')
-            ->where('tipe', 'keluar')
-            ->latest()
-            ->get();
+        $query = HistoriBarang::with('item')->where('tipe', 'keluar');
 
-        return response()->json($data);
+        if ($request->filled('tanggal_dari')) {
+            $query->whereDate('tanggal', '>=', $request->tanggal_dari);
+        }
+
+        if ($request->filled('tanggal_sampai')) {
+            $query->whereDate('tanggal', '<=', $request->tanggal_sampai);
+        }
+
+        if ($request->filled('sku')) {
+            $query->where('item_id', $request->sku);
+        }
+
+        $perPage = $request->get('per_page', 10);
+        return response()->json($query->orderByDesc('tanggal')->paginate($perPage));
     }
 
     public function store(Request $request)
     {
         $request->validate([
-            'item_id' => 'required|exists:items,id',
-            'tanggal' => 'required|date',
-            'jumlah' => 'required|integer|min:1',
+            'item_id'    => 'required|exists:items,id',
+            'tanggal'    => 'required|date',
+            'jumlah'     => 'required|integer|min:1',
             'keterangan' => 'nullable|string',
         ]);
 
@@ -37,10 +47,10 @@ class BarangKeluarController extends Controller
         $item->save();
 
         HistoriBarang::create([
-            'item_id' => $item->id,
-            'tipe' => 'keluar',
-            'jumlah' => $request->jumlah,
-            'tanggal' => $request->tanggal,
+            'item_id'    => $item->id,
+            'tipe'       => 'keluar',
+            'jumlah'     => $request->jumlah,
+            'tanggal'    => $request->tanggal,
             'keterangan' => $request->keterangan ?? 'Barang keluar via API',
         ]);
 

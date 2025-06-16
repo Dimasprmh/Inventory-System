@@ -51,7 +51,7 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     Route::put('/products/{product}/items/{item}', [ProductItemController::class, 'update']);
     Route::delete('/products/{product}/items/{item}', [ProductItemController::class, 'destroy']);
 
-    // ✅ User Management
+    // User Management
     Route::get('/users', [UserController::class, 'index']);
     Route::post('/users', [UserController::class, 'store']);
     Route::put('/users/{id}', [UserController::class, 'update']);

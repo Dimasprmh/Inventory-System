@@ -76,7 +76,6 @@ async function loadUsers() {
         headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/json' }
     });
     const result = await res.json();
-    console.log("Data dari API:", result.data); // ⬅️ letakkan di sini
     const tbody = document.querySelector('#usersTable tbody');
     tbody.innerHTML = '';
     result.data.forEach(user => {
@@ -95,7 +94,6 @@ async function loadUsers() {
 }
 
 function editUser(user) {
-    console.log("Edit User:", user);
 
     document.getElementById('userId').value = user.id;
     document.getElementById('name').value = user.name;
