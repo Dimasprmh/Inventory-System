@@ -43,3 +43,7 @@ Route::get('/usermanagement', function () {
 Route::get('/403', function () {
     return response()->view('errors.403', [], 403);
 })->name('403');
+
+Route::get('/activity-log', function () {
+    return view('activity_log.activitylog'); 
+});

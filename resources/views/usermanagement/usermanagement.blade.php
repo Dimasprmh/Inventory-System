@@ -1,5 +1,18 @@
 @extends('layouts.app')
 
+@section('breadcrumb')
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb bg-white mb-0">
+        <li class="breadcrumb-item">
+            <a href="{{ url('/dashboard') }}" class="text-dark text-decoration-none">Inventory System</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">
+            User Management
+        </li>
+    </ol>
+</nav>
+@endsection
+
 @section('content')
 <h1 class="h3 mb-4 text-gray-800">Karyawan Manajemen</h1>
 
@@ -70,6 +83,8 @@
 @push('scripts')
 <script>
 const token = sessionStorage.getItem('token');
+// const user = sessionStorage.getItem('user');
+// if(user.role !== 'admin') window.location.href = '/403';
 
 async function loadUsers() {
     const res = await fetch('/api/users', {

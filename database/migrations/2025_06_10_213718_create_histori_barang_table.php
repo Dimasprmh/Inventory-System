@@ -13,7 +13,7 @@ class CreateHistoriBarangTable extends Migration
             $table->uuid('item_id');
             $table->enum('tipe', ['masuk', 'keluar']);
             $table->integer('jumlah');
-            $table->date('tanggal');
+            $table->dateTime('tanggal');
             $table->text('keterangan')->nullable();
             $table->timestamps();
         });

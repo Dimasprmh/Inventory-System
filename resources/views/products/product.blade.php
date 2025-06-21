@@ -1,4 +1,18 @@
 @extends('layouts.app')
+
+@section('breadcrumb')
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb bg-white mb-0">
+        <li class="breadcrumb-item">
+            <a href="{{ url('/dashboard') }}" class="text-dark text-decoration-none">Inventory System</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">
+            Products
+        </li>
+    </ol>
+</nav>
+@endsection
+
 @section('content')
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
     <h1 class="h3 mb-0 text-gray-800">Stok Barang</h1>
@@ -9,6 +23,18 @@
 
 <div class="mb-3">
     <input type="text" class="form-control" id="searchInput" placeholder="Cari produk...">
+</div>
+
+<div class="mb-2">
+    <label>Show
+        <select id="perPageSelect" class="custom-select custom-select-sm w-auto">
+            <option value="5">5</option>
+            <option value="10" selected>10</option>
+            <option value="25">25</option>
+            <option value="50">50</option>
+        </select>
+        entries
+    </label>
 </div>
 
 <div class="row">
@@ -52,28 +78,21 @@
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
-
                 <div class="modal-body">
-                    <!-- Nama Produk -->
                     <div class="form-group">
                         <label for="namaProduk">Nama Produk</label>
                         <input type="text" class="form-control" id="namaProduk" name="name" required>
                     </div>
-
-                    <!-- Unit -->
                     <div class="form-group">
                         <label for="unitProduk">Unit</label>
                         <input type="text" class="form-control" id="unitProduk" name="unit" required>
                     </div>
-
-                    <!-- Item Attributes Dinamis -->
                     <div class="form-group">
                         <label>Item Attributes</label>
                         <div id="attributesWrapper"></div>
                         <button type="button" class="btn btn-sm btn-outline-secondary mt-2" id="addAttributeBtn">+ Tambah Atribut</button>
                     </div>
                 </div>
-
                 <div class="modal-footer">
                     <button type="submit" class="btn btn-primary">Simpan</button>
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
@@ -83,28 +102,26 @@
     </div>
 </div>
 
-
-
 <!-- Modal Edit Produk -->
 <div class="modal fade" id="modalEditProduk" tabindex="-1" role="dialog" aria-labelledby="modalEditProdukLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <form id="formEditProduk">
+            <input type="hidden" id="editProductId">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">Edit Produk</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Tutup">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
                 <div class="modal-body">
-                    <input type="hidden" id="editProductId">
                     <div class="form-group">
                         <label for="editNamaProduk">Nama Produk</label>
-                        <input type="text" class="form-control" id="editNamaProduk" required>
+                        <input type="text" class="form-control" id="editNamaProduk" name="name" required>
                     </div>
                     <div class="form-group">
                         <label for="editUnitProduk">Unit</label>
-                        <input type="text" class="form-control" id="editUnitProduk" required>
+                        <input type="text" class="form-control" id="editUnitProduk" name="unit" required>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -119,207 +136,205 @@
 
 @push('scripts')
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        loadProducts(1);
-    });
+document.addEventListener('DOMContentLoaded', function () {
+    document.getElementById('perPageSelect').addEventListener('change', () => loadProducts(1));
+    loadProducts(1);
+});
 
-    let attributeIndex = 0;
+let attributeIndex = 0;
 
-    document.getElementById('addAttributeBtn').addEventListener('click', function () {
-        const wrapper = document.getElementById('attributesWrapper');
+document.getElementById('addAttributeBtn').addEventListener('click', function () {
+    const wrapper = document.getElementById('attributesWrapper');
+    const div = document.createElement('div');
+    div.classList.add('form-row', 'mb-2');
+    div.innerHTML = `
+        <div class="col">
+            <input type="text" class="form-control" name="attributes[${attributeIndex}][name]" placeholder="Nama Atribut (mis. warna)" required>
+        </div>
+        <div class="col-auto">
+            <button type="button" class="btn btn-danger btn-sm remove-attribute">&times;</button>
+        </div>
+    `;
+    wrapper.appendChild(div);
+    attributeIndex++;
+});
 
-        const div = document.createElement('div');
-        div.classList.add('form-row', 'mb-2');
-        div.innerHTML = `
-            <div class="col">
-                <input type="text" class="form-control" name="attributes[${attributeIndex}][name]" placeholder="Nama Atribut (mis. warna)" required>
-            </div>
-            <div class="col-auto">
-                <button type="button" class="btn btn-danger btn-sm remove-attribute">&times;</button>
-            </div>
-        `;
-
-        wrapper.appendChild(div);
-        attributeIndex++;
-    });
-
-    document.getElementById('attributesWrapper').addEventListener('click', function (e) {
-        if (e.target.classList.contains('remove-attribute')) {
-            e.target.closest('.form-row').remove();
-        }
-    });
-
-    async function loadProducts(page = 1) {
-        const token = sessionStorage.getItem('token');
-        const tbody = document.getElementById('productTableBody');
-        const paginationWrapper = document.getElementById('paginationWrapper');
-
-        if (!token) return window.location.href = '/login';
-
-        try {
-            const response = await fetch(`/api/products?page=${page}`, {
-                headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/json' }
-            });
-
-            if (!response.ok) throw new Error('Unauthenticated');
-
-            const result = await response.json();
-            const products = result.data.data || [];
-            tbody.innerHTML = '';
-
-            if (products.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" class="text-center">Tidak ada produk</td></tr>`;
-                paginationWrapper.innerHTML = '';
-                return;
-            }
-
-            products.forEach((p, index) => {
-                const nomor = (result.data.per_page * (result.data.current_page - 1)) + index + 1;
-                const row = `
-                    <tr>
-                        <td>${nomor}</td>
-                        <td>${p.name}</td>
-                        <td>${p.unit}</td>
-                        <td class="text-center">
-                            <a href="/products/${p.id}/items?name=${encodeURIComponent(p.name)}" class="btn btn-info btn-sm">
-                                <i class="fas fa-info-circle"></i> Info
-                            </a>
-                            <button class="btn btn-sm btn-warning mr-1" onclick="editProduk('${p.id}', '${p.name}', '${p.unit}')">
-                                <i class="fas fa-edit"></i> Edit
-                            </button>
-                            <button class="btn btn-sm btn-danger" onclick="hapusProduk('${p.id}')">
-                                <i class="fas fa-trash"></i> Hapus
-                            </button>
-                        </td>
-                    </tr>
-                `;
-                tbody.innerHTML += row;
-            });
-
-            renderPagination(result.data.current_page, result.data.last_page);
-        } catch (error) {
-            console.error(error);
-            tbody.innerHTML = `<tr><td colspan="4" class="text-center text-danger">Gagal mengambil data</td></tr>`;
-        }
+document.getElementById('attributesWrapper').addEventListener('click', function (e) {
+    if (e.target.classList.contains('remove-attribute')) {
+        e.target.closest('.form-row').remove();
     }
+});
 
-    function renderPagination(currentPage, lastPage) {
-        const paginationWrapper = document.getElementById('paginationWrapper');
-        let html = '';
-        if (currentPage > 1) html += `<li class="page-item"><a class="page-link" href="#" onclick="loadProducts(${currentPage - 1}); return false;">&laquo;</a></li>`;
-        else html += `<li class="page-item disabled"><span class="page-link">&laquo;</span></li>`;
+async function loadProducts(page = 1) {
+    const token = sessionStorage.getItem('token');
+    const perPage = parseInt(document.getElementById('perPageSelect').value);
+    const tbody = document.getElementById('productTableBody');
+    const paginationWrapper = document.getElementById('paginationWrapper');
 
-        for (let i = 1; i <= lastPage; i++) {
-            html += (i === currentPage)
-                ? `<li class="page-item active"><span class="page-link">${i}</span></li>`
-                : `<li class="page-item"><a class="page-link" href="#" onclick="loadProducts(${i}); return false;">${i}</a></li>`;
-        }
+    if (!token) return window.location.href = '/login';
 
-        if (currentPage < lastPage) html += `<li class="page-item"><a class="page-link" href="#" onclick="loadProducts(${currentPage + 1}); return false;">&raquo;</a></li>`;
-        else html += `<li class="page-item disabled"><span class="page-link">&raquo;</span></li>`;
-
-        paginationWrapper.innerHTML = `<ul class="pagination justify-content-center">${html}</ul>`;
-    }
-
-    document.getElementById('formTambahProduk').addEventListener('submit', async function (e) {
-        e.preventDefault();
-        const token = sessionStorage.getItem('token');
-        const name = document.getElementById('namaProduk').value;
-        const unit = document.getElementById('unitProduk').value;
-
-        // Ambil semua atribut yang diinputkan
-        const attributeInputs = document.querySelectorAll('#attributesWrapper input[name^="attributes"]');
-        const attributes = [];
-        attributeInputs.forEach(input => {
-            attributes.push({ name: input.value });
+    try {
+        const response = await fetch(`/api/products?page=${page}&per_page=${perPage}`, {
+            headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/json' }
         });
 
-        try {
-            const response = await fetch('/api/products', {
-                method: 'POST',
-                headers: {
-                    'Authorization': 'Bearer ' + token,
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ name, unit, attributes })
-            });
+        if (!response.ok) throw new Error('Unauthenticated');
 
-            if (!response.ok) throw new Error('Gagal menyimpan produk');
+        const result = await response.json();
+        const products = result.data.data || [];
+        tbody.innerHTML = '';
 
-            $('#modalTambahProduk').modal('hide');
-            showFlashMessage('success', 'Produk berhasil ditambahkan!');
-            loadProducts();
-            this.reset();
-            document.getElementById('attributesWrapper').innerHTML = '';
-            attributeIndex = 0;
-        } catch (error) {
-            console.log(error)
-            console.error(error);
-            alert('Terjadi kesalahan saat menambah produk.');
+        if (products.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" class="text-center">Tidak ada produk</td></tr>`;
+            paginationWrapper.innerHTML = '';
+            return;
         }
+
+        products.forEach((p, index) => {
+            const nomor = (result.data.per_page * (result.data.current_page - 1)) + index + 1;
+            const row = `
+                <tr>
+                    <td>${nomor}</td>
+                    <td>${p.name}</td>
+                    <td>${p.unit}</td>
+                    <td class="text-center">
+                        <a href="/products/${p.id}/items?name=${encodeURIComponent(p.name)}" class="btn btn-info btn-sm">
+                            <i class="fas fa-info-circle"></i> Info
+                        </a>
+                        <button class="btn btn-sm btn-warning mr-1" onclick="editProduk('${p.id}', '${p.name}', '${p.unit}')">
+                            <i class="fas fa-edit"></i> Edit
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="hapusProduk('${p.id}')">
+                            <i class="fas fa-trash"></i> Hapus
+                        </button>
+                    </td>
+                </tr>
+            `;
+            tbody.innerHTML += row;
+        });
+
+        renderPagination(result.data.current_page, result.data.last_page);
+    } catch (error) {
+        console.error(error);
+        tbody.innerHTML = `<tr><td colspan="4" class="text-center text-danger">Gagal mengambil data</td></tr>`;
+    }
+}
+
+function renderPagination(currentPage, lastPage) {
+    const paginationWrapper = document.getElementById('paginationWrapper');
+    let html = '';
+    if (currentPage > 1) html += `<li class="page-item"><a class="page-link" href="#" onclick="loadProducts(${currentPage - 1}); return false;">&laquo;</a></li>`;
+    else html += `<li class="page-item disabled"><span class="page-link">&laquo;</span></li>`;
+
+    for (let i = 1; i <= lastPage; i++) {
+        html += (i === currentPage)
+            ? `<li class="page-item active"><span class="page-link">${i}</span></li>`
+            : `<li class="page-item"><a class="page-link" href="#" onclick="loadProducts(${i}); return false;">${i}</a></li>`;
+    }
+
+    if (currentPage < lastPage) html += `<li class="page-item"><a class="page-link" href="#" onclick="loadProducts(${currentPage + 1}); return false;">&raquo;</a></li>`;
+    else html += `<li class="page-item disabled"><span class="page-link">&raquo;</span></li>`;
+
+    paginationWrapper.innerHTML = `<ul class="pagination justify-content-center">${html}</ul>`;
+}
+
+document.getElementById('formTambahProduk').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    const token = sessionStorage.getItem('token');
+    const name = document.getElementById('namaProduk').value;
+    const unit = document.getElementById('unitProduk').value;
+
+    const attributeInputs = document.querySelectorAll('#attributesWrapper input[name^="attributes"]');
+    const attributes = [];
+    attributeInputs.forEach(input => {
+        attributes.push({ name: input.value });
     });
 
-    async function hapusProduk(id) {
-        const token = sessionStorage.getItem('token');
+    try {
+        const response = await fetch('/api/products', {
+            method: 'POST',
+            headers: {
+                'Authorization': 'Bearer ' + token,
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ name, unit, attributes })
+        });
 
-        try {
-            const response = await fetch(`/api/products/${id}`, {
-                method: 'DELETE',
-                headers: {
-                    'Authorization': 'Bearer ' + token,
-                    'Accept': 'application/json'
-                }
-            });
+        if (!response.ok) throw new Error('Gagal menyimpan produk');
 
-            if (!response.ok) throw new Error('Gagal menghapus produk');
-
-            showFlashMessage('success', 'Produk berhasil dihapus!');
-            loadProducts();
-        } catch (error) {
-            console.error(error);
-            showFlashMessage('danger', 'Terjadi kesalahan saat menghapus produk.');
-        }
+        $('#modalTambahProduk').modal('hide');
+        showFlashMessage('success', 'Produk berhasil ditambahkan!');
+        loadProducts();
+        this.reset();
+        document.getElementById('attributesWrapper').innerHTML = '';
+        attributeIndex = 0;
+    } catch (error) {
+        console.error(error);
+        alert('Terjadi kesalahan saat menambah produk.');
     }
+});
 
-    function editProduk(id, name, unit) {
-        document.getElementById('editProductId').value = id;
-        document.getElementById('editNamaProduk').value = name;
-        document.getElementById('editUnitProduk').value = unit;
-        $('#modalEditProduk').modal('show');
+async function hapusProduk(id) {
+    const token = sessionStorage.getItem('token');
+
+    try {
+        const response = await fetch(`/api/products/${id}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': 'Bearer ' + token,
+                'Accept': 'application/json'
+            }
+        });
+
+        if (!response.ok) throw new Error('Gagal menghapus produk');
+
+        showFlashMessage('success', 'Produk berhasil dihapus!');
+        loadProducts();
+    } catch (error) {
+        console.error(error);
+        showFlashMessage('danger', 'Terjadi kesalahan saat menghapus produk.');
     }
+}
 
-    document.getElementById('formEditProduk').addEventListener('submit', async function (e) {
-        e.preventDefault();
-        const token = sessionStorage.getItem('token');
-        const id = document.getElementById('editProductId').value;
-        const name = document.getElementById('editNamaProduk').value;
-        const unit = document.getElementById('editUnitProduk').value;
+function editProduk(id, name, unit) {
+    document.getElementById('editProductId').value = id;
+    document.getElementById('editNamaProduk').value = name;
+    document.getElementById('editUnitProduk').value = unit;
+    $('#modalEditProduk').modal('show');
+}
 
-        try {
-            const response = await fetch(`/api/products/${id}`, {
-                method: 'PUT',
-                headers: {
-                    'Authorization': 'Bearer ' + token,
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ name, unit })
-            });
+document.getElementById('formEditProduk').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    const token = sessionStorage.getItem('token');
+    const id = document.getElementById('editProductId').value;
+    const name = document.getElementById('editNamaProduk').value;
+    const unit = document.getElementById('editUnitProduk').value;
 
-            if (!response.ok) throw new Error('Gagal mengupdate produk');
+    try {
+        const response = await fetch(`/api/products/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': 'Bearer ' + token,
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ name, unit })
+        });
 
-            $('#modalEditProduk').modal('hide');
-            showFlashMessage('success', 'Produk berhasil diperbarui!');
-            loadProducts();
-        } catch (error) {
-            console.error(error);
-            alert('Terjadi kesalahan saat mengupdate produk.');
-        }
-    });
+        if (!response.ok) throw new Error('Gagal mengupdate produk');
 
-    function showFlashMessage(type, message) {
-        alert(message);
+        $('#modalEditProduk').modal('hide');
+        showFlashMessage('success', 'Produk berhasil diperbarui!');
+        loadProducts();
+    } catch (error) {
+        console.error(error);
+        alert('Terjadi kesalahan saat mengupdate produk.');
     }
+});
+
+function showFlashMessage(type, message) {
+    alert(message); // Anda bisa ganti ini dengan notifikasi Bootstrap atau SweetAlert
+}
 </script>
 @endpush

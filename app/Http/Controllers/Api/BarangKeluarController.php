@@ -51,7 +51,8 @@ class BarangKeluarController extends Controller
             'tipe'       => 'keluar',
             'jumlah'     => $request->jumlah,
             'tanggal'    => $request->tanggal,
-            'keterangan' => $request->keterangan ?? 'Barang keluar via API',
+            'keterangan' => $request->keterangan,
+            'user_id' => auth()->id()
         ]);
 
         return response()->json(['message' => 'Barang keluar berhasil disimpan'], 201);

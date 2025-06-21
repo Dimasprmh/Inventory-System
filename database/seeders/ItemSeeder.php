@@ -5,40 +5,51 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class ItemSeeder extends Seeder
 {
     public function run(): void
     {
-        // Ambil semua ID dari tabel products
-        $productIds = DB::table('products')->pluck('id');
+        $productId = 'caeb954e-c593-4138-b04a-3d290c60f3e2';
 
-        if ($productIds->isEmpty()) {
-            echo "Tabel 'products' kosong. Silakan isi terlebih dahulu.\n";
+        // Ambil ID dari atribut "Jenis"
+        $jenisAttributeId = DB::table('product_attributes')
+            ->where('product_id', $productId)
+            ->where('name', 'Jenis')
+            ->value('id');
+
+        if (!$jenisAttributeId) {
+            $this->command->error('Attribute "Jenis" belum ada di product_attributes.');
             return;
         }
 
-        // Data varian gelas
-        $items = [
-            ['sku' => 'SKU-2001', 'ukuran' => 250, 'stock' => 100, 'merk' => 'Tupperware'],
-            ['sku' => 'SKU-2002', 'ukuran' => 200, 'stock' => 100, 'merk' => 'Tupperware'],
-            ['sku' => 'SKU-2003', 'ukuran' => 300, 'stock' => 120, 'merk' => 'Lock&Lock'],
-            ['sku' => 'SKU-2004', 'ukuran' => 200, 'stock' => 90,  'merk' => 'Polytron'],
-            ['sku' => 'SKU-2005', 'ukuran' => 350, 'stock' => 70,  'merk' => 'Ecentio'],
-            ['sku' => 'SKU-2006', 'ukuran' => 400, 'stock' => 110, 'merk' => 'Krisbow'],
-        ];
+        $ukuranList = ['500 ML', '650 ML', '750 ML', '1000 ML'];
+        $jenisList = ['Round', 'Rectangle'];
 
-        foreach ($items as $item) {
-            DB::table('items')->insert([
-                'id' => (string) Str::uuid(),
-                'ukuran' => $item['ukuran'],
-                'stock' => $item['stock'],
-                'merk' => $item['merk'],
-                'sku' => $item['sku'],
-                'product_id' => $productIds->random(), // ambil satu product_id secara acak
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+        foreach ($jenisList as $jenis) {
+            foreach ($ukuranList as $ukuran) {
+                $itemId = (string) Str::uuid();
+
+                DB::table('items')->insert([
+                    'id' => $itemId,
+                    'sku' => 'TW-' . strtoupper(substr($jenis, 0, 3)) . '-' . str_replace(' ', '', $ukuran),
+                    'merk' => 'Thinwall',
+                    'ukuran' => $ukuran,
+                    'stock' => rand(5, 20),
+                    'product_id' => $productId,
+                    'created_at' => Carbon::now(),
+                    'updated_at' => Carbon::now(),
+                ]);
+
+                DB::table('item_attribute_values')->insert([
+                    'item_id' => $itemId,
+                    'product_attribute_id' => $jenisAttributeId,
+                    'value' => $jenis,
+                    'created_at' => Carbon::now(),
+                    'updated_at' => Carbon::now(),
+                ]);
+            }
         }
     }
 }

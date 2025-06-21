@@ -8,12 +8,14 @@ use App\Http\Controllers\Api\ProductItemController;
 use App\Http\Controllers\Api\BarangMasukController;
 use App\Http\Controllers\Api\BarangKeluarController;
 use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\Api\ActivityLogController;
 
 // AUTH ROUTES
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
-// USER & ADMIN – Akses umum
+// USER & ADMIN – Akses umum (login required)
 Route::middleware('auth:sanctum')->group(function () {
 
     // Get user info + menu
@@ -37,6 +39,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/barang-masuk', [BarangMasukController::class, 'store']);
     Route::get('/barang-keluar', [BarangKeluarController::class, 'index']);
     Route::post('/barang-keluar', [BarangKeluarController::class, 'store']);
+
+    // Statistik & Grafik Dashboard 
+    Route::get('/dashboard/statistik', [DashboardController::class, 'statistik']);
+    Route::get('/dashboard/grafik-bulanan', [DashboardController::class, 'grafikBarangBulanan']);
+
+    // Log aktivitas akun
+    Route::get('/my-activity-log', [ActivityLogController::class, 'index']);
 });
 
 // ADMIN ONLY – Kelola data
@@ -56,5 +65,4 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     Route::post('/users', [UserController::class, 'store']);
     Route::put('/users/{id}', [UserController::class, 'update']);
     Route::delete('/users/{id}', [UserController::class, 'destroy']);
-
 });

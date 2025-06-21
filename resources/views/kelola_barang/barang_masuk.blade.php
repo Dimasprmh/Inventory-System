@@ -1,5 +1,18 @@
 @extends('layouts.app')
 
+@section('breadcrumb')
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb bg-white mb-0">
+        <li class="breadcrumb-item">
+            <a href="{{ url('/dashboard') }}" class="text-dark text-decoration-none">Inventory System</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">
+            Barang Masuk
+        </li>
+    </ol>
+</nav>
+@endsection
+
 @section('content')
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
     <h1 class="h3 mb-0 text-gray-800">Barang Masuk</h1>
@@ -32,9 +45,9 @@
     </div>
 </div>
 
-<!-- Show Entries -->
-<div class="d-flex justify-content-between mb-2">
-    <div>
+<!-- Show Entries & Search -->
+<div class="row align-items-center mb-2">
+    <div class="col-md-6 col-sm-12">
         <label>Show
             <select id="perPageSelect" class="custom-select custom-select-sm w-auto">
                 <option value="5">5</option>
@@ -44,6 +57,12 @@
             </select>
             entries
         </label>
+    </div>
+    <div class="col-md-6 col-sm-12 text-md-right mt-2 mt-md-0">
+        <input type="text" id="searchInput"
+            class="form-control form-control-sm d-inline-block"
+            style="height: 40px; width: 300px; border-radius: 0.35rem;"
+            placeholder="Search">
     </div>
 </div>
 
@@ -122,6 +141,18 @@ document.addEventListener('DOMContentLoaded', function () {
     const itemSelect = document.getElementById('item_id');
     const filterSku = document.getElementById('filter_sku');
     const perPageSelect = document.getElementById('perPageSelect');
+
+    const searchInput = document.getElementById('searchInput');
+    const table = document.getElementById('productTable');
+    const tbody = table.querySelector('tbody');
+
+    searchInput.addEventListener('input', function () {
+        const keyword = this.value.toLowerCase();
+        Array.from(tbody.rows).forEach(row => {
+            const rowText = row.innerText.toLowerCase();
+            row.style.display = rowText.includes(keyword) ? '' : 'none';
+        });
+    });
 
     let currentPage = 1;
     let perPage = parseInt(perPageSelect.value);

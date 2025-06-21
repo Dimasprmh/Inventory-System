@@ -25,7 +25,6 @@ class BarangMasukController extends Controller
 
         $perPage = $request->get('per_page', 10);
 
-        // ✅ Urutkan berdasarkan tanggal DESC (terbaru ke terlama)
         return response()->json(
             $query->orderBy('tanggal', 'desc')->paginate($perPage)
         );
@@ -44,12 +43,14 @@ class BarangMasukController extends Controller
         $item->stock += $request->jumlah;
         $item->save();
 
+
         HistoriBarang::create([
             'item_id'    => $item->id,
             'tipe'       => 'masuk',
             'jumlah'     => $request->jumlah,
             'tanggal'    => $request->tanggal,
-            'keterangan' => $request->keterangan ?? 'Barang masuk via API',
+            'keterangan' => $request->keterangan,
+            'user_id' => auth()->id(),
         ]);
 
         return response()->json(['message' => 'Barang masuk berhasil disimpan'], 201);

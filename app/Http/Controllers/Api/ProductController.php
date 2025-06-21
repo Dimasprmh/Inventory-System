@@ -15,14 +15,14 @@ class ProductController extends Controller
     // GET /api/products
     public function index(Request $request)
     {
-        $products = Product::with('attributes')->latest()->paginate(5);
+        $perPage = $request->get('per_page', 10);
+        $products = Product::with('attributes')->latest()->paginate($perPage);
         return new ProductResource(true, 'List Data Products', $products);
     }
 
     // POST /api/products
     public function store(Request $request)
     {
-        // Validasi dasar produk
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'unit' => 'required|string|max:50',
@@ -36,12 +36,10 @@ class ProductController extends Controller
 
         DB::beginTransaction();
         try {
-            // Simpan produk
             $product = Product::create([
                 'name' => $request->name,
                 'unit' => $request->unit,
             ]);
-
 
             if ($request->has('attributes')) {
                 foreach ($request->input('attributes', []) as $attr) {
@@ -94,13 +92,11 @@ class ProductController extends Controller
 
         DB::beginTransaction();
         try {
-            // Update produk
             $product->update([
                 'name' => $request->name,
                 'unit' => $request->unit,
             ]);
 
-            // Hapus dan tambah ulang atribut (bisa kamu sesuaikan untuk lebih efisien)
             $product->attributes()->delete();
 
             if ($request->has('attributes')) {

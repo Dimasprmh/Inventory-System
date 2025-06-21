@@ -8,7 +8,8 @@ class HistoriBarang extends Model
 {
     protected $table = 'histori_barang';
 
-    protected $fillable = ['item_id', 'tipe', 'jumlah', 'tanggal', 'keterangan'];
+    protected $fillable = ['item_id', 'tipe', 'jumlah', 'tanggal', 'keterangan', 'user_id'];
+
 
     protected $casts = [
         'tanggal' => 'datetime', // agar bisa diformat di backend jika perlu
@@ -17,5 +18,10 @@ class HistoriBarang extends Model
     public function item()
     {
         return $this->belongsTo(Item::class);
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id', 'id');
     }
 }

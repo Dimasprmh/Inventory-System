@@ -92,7 +92,7 @@
             const sidebar = document.getElementById('accordionSidebar');
 
             let html = `
-                <a class="sidebar-brand d-flex align-items-center justify-content-center" href="#">
+                <a class="sidebar-brand d-flex align-items-center justify-content-center">
                     <div class="sidebar-brand-text mx-3">Stok Gudang</div>
                 </a>
                 <hr class="sidebar-divider my-0">

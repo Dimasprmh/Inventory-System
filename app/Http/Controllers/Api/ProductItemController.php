@@ -25,7 +25,6 @@ class ProductItemController extends Controller
     public function getAllItems()
     {
         $items = \App\Models\Item::with('product')->get();
-
         return response()->json($items);
     }
 
@@ -35,7 +34,7 @@ class ProductItemController extends Controller
         $validator = Validator::make($request->all(), [
             'sku' => 'required|string|unique:items,sku',
             'merk' => 'required|string',
-            'ukuran' => 'required|integer',
+            'ukuran' => 'required|string|max:50', // diperbarui dari integer ke string
             'stock' => 'required|integer',
             'attribute_values' => 'nullable|array',
             'attribute_values.*.product_attribute_id' => 'required|integer|exists:product_attributes,id',
@@ -95,7 +94,7 @@ class ProductItemController extends Controller
         $validator = Validator::make($request->all(), [
             'sku' => 'required|string|unique:items,sku,' . $item->id,
             'merk' => 'required|string',
-            'ukuran' => 'required|integer',
+            'ukuran' => 'required|string|max:50', // diperbarui dari integer ke string
             'stock' => 'required|integer',
             'attribute_values' => 'nullable|array',
             'attribute_values.*.product_attribute_id' => 'required|integer|exists:product_attributes,id',

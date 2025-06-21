@@ -1,9 +1,22 @@
 @extends('layouts.app')
 
+@section('breadcrumb')
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb bg-white mb-0">
+        <li class="breadcrumb-item">
+            <a href="{{ url('/dashboard') }}" class="text-dark text-decoration-none">Inventory System</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">
+            Barang Keluar
+        </li>
+    </ol>
+</nav>
+@endsection
+
 @section('content')
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
     <h1 class="h3 mb-0 text-gray-800">Barang Keluar</h1>
-    <button class="btn btn-sm btn-danger shadow-sm" data-toggle="modal" data-target="#modalBarangKeluar">
+    <button class="btn btn-sm btn-primary shadow-sm" data-toggle="modal" data-target="#modalBarangKeluar">
         <i class="fas fa-minus fa-sm text-white-50"></i> Tambah Barang Keluar
     </button>
 </div>
@@ -27,14 +40,14 @@
         </div>
         <div class="col-md-2">
             <label>&nbsp;</label>
-            <button class="btn btn-danger btn-block" id="applyFilter">Filter</button>
+            <button class="btn btn-primary btn-block" id="applyFilter">Filter</button>
         </div>
     </div>
 </div>
 
-<!-- Show Entries -->
-<div class="d-flex justify-content-between mb-2">
-    <div>
+<!-- Show Entries & Search -->
+<div class="row align-items-center mb-2">
+    <div class="col-md-6 col-sm-12">
         <label>Show
             <select id="perPageSelect" class="custom-select custom-select-sm w-auto">
                 <option value="5">5</option>
@@ -44,6 +57,12 @@
             </select>
             entries
         </label>
+    </div>
+    <div class="col-md-6 col-sm-12 text-md-right mt-2 mt-md-0">
+        <input type="text" id="searchInput"
+               class="form-control form-control-sm d-inline-block"
+               style="height: 40px; width: 300px; border-radius: 0.35rem;"
+               placeholder="Search">
     </div>
 </div>
 
@@ -55,7 +74,7 @@
                 <h6 class="m-0 font-weight-bold text-primary">Histori Barang Keluar</h6>
             </div>
             <div class="card-body">
-                <table class="table table-bordered">
+                <table class="table table-bordered" id="barangKeluarTable">
                     <thead>
                         <tr>
                             <th>No</th>
@@ -122,9 +141,20 @@ document.addEventListener('DOMContentLoaded', function () {
     const itemSelect = document.getElementById('item_id');
     const filterSku = document.getElementById('filter_sku');
     const perPageSelect = document.getElementById('perPageSelect');
+    const searchInput = document.getElementById('searchInput');
+    const table = document.getElementById('barangKeluarTable');
+    const tbody = table.querySelector('tbody');
 
     let currentPage = 1;
     let perPage = parseInt(perPageSelect.value);
+
+    searchInput.addEventListener('input', function () {
+        const keyword = this.value.toLowerCase();
+        Array.from(tbody.rows).forEach(row => {
+            const rowText = row.innerText.toLowerCase();
+            row.style.display = rowText.includes(keyword) ? '' : 'none';
+        });
+    });
 
     perPageSelect.addEventListener('change', () => {
         perPage = parseInt(perPageSelect.value);
